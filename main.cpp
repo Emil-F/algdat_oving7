@@ -79,6 +79,8 @@ std::vector<int> dijkstra(const Graph& graph, int src, int goal) {
 }
 
 void initGraph(Graph &graph, std::string filePath) {
+    std::cout << "Initializing Graph..." << '\n';
+
     std::ifstream nodeData(filePath);
 
     if (!nodeData) {
@@ -100,6 +102,10 @@ void initGraph(Graph &graph, std::string filePath) {
     while (kantData >> franode >> tilnode >> kjoretid >> lengde >> fartsgrense) {
         graph.add_edge(franode, tilnode, kjoretid);
     }
+
+    std::cout << "Initialization Finished";
+    std::cout << '\n';
+    std::cout << '\n';
 }
 
 int main(int argc, char *argv[]) {
