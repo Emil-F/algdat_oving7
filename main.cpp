@@ -75,9 +75,8 @@ std::vector<int> dijkstra(const Graph& graph, int src, int goal) {
         for (const auto& edge : graph.adjList.at(curV)) {
             int neighbourVertex = edge.to;
             int weight = edge.weight;
-            long long kandidat = qDist + weight;
 
-            if (kandidat < dist[neighbourVertex]) {
+            if (dist[neighbourVertex] > qDist + weight) {
                 dist[neighbourVertex] = qDist + weight;
                 min_pq.push({dist[neighbourVertex], neighbourVertex});
             }
@@ -102,29 +101,22 @@ double haversine(double b1, double b2, double l1, double l2) {
     return 2*r * asin(sqrt(term1 + term2));
 }
 
-std::vector<int> aStjerne(const Graph& graph, int src, int goal, double maxSpeedKmh) {
-    using QueueEntry = std::tuple<double, int, int>;
+std::vector<int> aStjerne(const Graph& graph, int src, int goal) {
+    // alias
+    using QueueEntry = std::pair<int, int>;
+
     std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<>> min_pq;
 
-    const auto& [goalLat, goalLon] = graph.coordinates.at(goal);
-
-    auto h = [&](int node) {
-        const auto& [lat, lon] = graph.coordinates.at(node);
-        return haversine(lat, goalLat, lon, goalLon) / maxSpeedKmh * 360000.0;
-    };
-
-    // alias
     std::vector dist(graph.nodeCount, INT_MAX);
 
     // set distance from source to itself to 0
     dist[src] = 0;
-
-    min_pq.emplace(h(src), 0, src);
+    min_pq.push({0, src});
 
     int visitCount = 0;
 
     while (!min_pq.empty()) {
-        auto [priority, qDist, curV] = min_pq.top();
+        auto [qDist, curV] = min_pq.top();
         min_pq.pop();
 
         if (qDist > dist[curV]) continue;
@@ -139,68 +131,9 @@ std::vector<int> aStjerne(const Graph& graph, int src, int goal, double maxSpeed
             int neighbourVertex = edge.to;
             int weight = edge.weight;
 
-            int nyTid = qDist + weight;
-
-            if (nyTid < dist[neighbourVertex]) {
-                dist[neighbourVertex] = nyTid;
-                min_pq.emplace(nyTid + h(neighbourVertex), nyTid, neighbourVertex);
-            }
-        }
-    }
-
-    return dist;
-}
-
-std::vector<int> alt(const Graph& graph, int src, int goal, const std::vector<std::vector<int>>& landmarkDistances) {
-    using QueueEntry = std::tuple<double, int, int>;
-    std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<>> min_pq;
-
-    auto h = [&](int node) {
-        int best = 0;
-
-        for (const auto& distances : landmarkDistances) {
-            int toNode = distances[node];
-            int toGoal = distances[goal];
-
-            if (toNode == INT_MAX || toGoal == INT_MAX) continue;
-
-            best = std::max(best, std::abs(toGoal - toNode));
-        }
-
-        return best;
-    };
-
-    // alias
-    std::vector dist(graph.nodeCount, INT_MAX);
-
-    // set distance from source to itself to 0
-    dist[src] = 0;
-
-    min_pq.emplace(h(src), 0, src);
-
-    int visitCount = 0;
-
-    while (!min_pq.empty()) {
-        auto [priority, qDist, curV] = min_pq.top();
-        min_pq.pop();
-
-        if (qDist > dist[curV]) continue;
-
-        ++visitCount;
-        if (curV == goal) {
-            std::cout << "Antall noder: " << visitCount << '\n';
-            break;
-        };
-
-        for (const auto& edge : graph.adjList.at(curV)) {
-            int neighbourVertex = edge.to;
-            int weight = edge.weight;
-
-            const long long nyTid = static_cast<long long>(qDist) + weight;
-
-            if (nyTid < dist[neighbourVertex]) {
-                dist[neighbourVertex] = static_cast<int>(nyTid);
-                min_pq.emplace(nyTid + h(neighbourVertex), nyTid, neighbourVertex);
+            if (dist[neighbourVertex] > qDist + weight) {
+                dist[neighbourVertex] = qDist + weight;
+                min_pq.push({dist[neighbourVertex], neighbourVertex});
             }
         }
     }
@@ -222,13 +155,7 @@ void initGraph(Graph &graph, std::string filePath) {
     graph.coordinates.resize(graph.nodeCount);
     for (int i = 0; i < graph.nodeCount; i++) {
         int nodenr;
-        Graph::Coordinates position;
-
-        if (!(nodeData >> nodenr >> position.breddegrad >> position.lengdegrad)
-            || nodenr < 0 || nodenr >= graph.nodeCount) {
-            throw std::runtime_error("Ugyldig noderad i " + filePath);
-        }
-
+        Graph::Coordinates position{};
         graph.coordinates[nodenr] = position;
     }
 
@@ -305,21 +232,6 @@ int main(int argc, char *argv[]) {
     Graph graph;
     initGraph(graph, "data/noder.txt");
 
-    std::vector<int> landmarkIds {
-        559,
-        1494,
-        21427,
-        53876,
-        105626
-    };
-
-    std::vector<std::vector<int>> landmarkDistances;
-    landmarkDistances.reserve(landmarkIds.size());
-
-    for (int landmarkId : landmarkIds) {
-        landmarkDistances.push_back(dijkstra(graph, landmarkId, -1));
-    }
-
     int source = 3942;
     int goal = 62192;
 
@@ -327,31 +239,10 @@ int main(int argc, char *argv[]) {
     std::vector<int> dist = dijkstra(graph, source, goal);
     clock_t duration = clock() - before;
 
-    std::cout << "Duration (Dijkstra's): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
+    std::cout << "Duration: " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
 
     float tid = static_cast<float>(dist[goal]) / 100 / 60;
     std::cout << "Tid (bil) (tt.mm.ss): " << tid << '\n';
-    std::cout << '\n';
-
-    before = clock();
-    dist = aStjerne(graph, source, goal, 45);
-    duration = clock() - before;
-
-    std::cout << "Duration (Astjerne): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
-
-    tid = static_cast<float>(dist[goal]) / 100 / 60;
-    std::cout << "Tid (bil) (tt.mm.ss): " << tid << '\n';
-    std::cout << '\n';
-
-    before = clock();
-    dist = alt(graph, source, goal, landmarkDistances);
-    duration = clock() - before;
-
-    std::cout << "Duration (ALT): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
-
-    tid = static_cast<float>(dist[goal]) / 100 / 60;
-    std::cout << "Tid (bil) (tt.mm.ss): " << tid << '\n';
-    std::cout << '\n';
 
     return 0;
 }
