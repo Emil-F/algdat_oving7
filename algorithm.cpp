@@ -22,7 +22,7 @@ std::vector<int> Algorithm::Dijkstra(const Init::Graph& graph, int src, int goal
     std::vector dist(graph.nodeCount, INT_MAX);
 
     // set distance from source to itself to 0
-    dist[src] = 0;
+    dist.at(src) = 0;
     min_pq.push({0, src});
 
     int visitCount = 0;
@@ -199,7 +199,7 @@ std::vector<int> Algorithm::findNearestInterestPoints(
                 int kode = it->second.kode;
                 std::string navn = it->second.navn;
 
-                if (kode == intKode) {
+                if ((kode & intKode) != 0) {
                     std::cout << "nodenr: " << nodenr << ", kode: " << kode << ", navn: " << navn << '\n';
                     interestPointsFound.push_back(nodenr);
                 };

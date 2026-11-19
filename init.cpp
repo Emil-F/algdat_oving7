@@ -18,23 +18,23 @@ void Init::Graph::add_edge(int u, int v, int weight) {
 
 void Init::Graph::print(int limit)
 {
-    std::cout << "Adjacency list for the Graph: " << '\n';
-    int count = 0;
-
-    for (const auto& [vertex, edges] : adjList) {
-        if (count >= limit) break;
-
-        std::cout << vertex << " -> ";
-        for (const auto& [to, weight] : edges) {
-            std::cout << to << " (weight: " << weight << ") ";
-        }
-        std::cout << '\n';
-        count++;
-    }
+    // std::cout << "Adjacency list for the Graph: " << '\n';
+    // int count = 0;
+    //
+    // for (const auto& [vertex, edges] : adjList) {
+    //     if (count >= limit) break;
+    //
+    //     std::cout << vertex << " -> ";
+    //     for (const auto& [to, weight] : edges) {
+    //         std::cout << to << " (weight: " << weight << ") ";
+    //     }
+    //     std::cout << '\n';
+    //     count++;
+    // }
 }
 
 void Init::initGraph(Graph &graph, std::string noderFilePath, std::string kanterFilePath) {
-    std::cout << "Initializing Graph... (This may take a while)" << '\n';
+    std::cout << "Starter initGraph... (Kan ta litt tid)" << '\n';
 
     std::ifstream nodeData(noderFilePath);
 
@@ -45,6 +45,9 @@ void Init::initGraph(Graph &graph, std::string noderFilePath, std::string kanter
     nodeData >> graph.nodeCount;
 
     graph.coordinates.resize(graph.nodeCount);
+    graph.adjList.resize(graph.nodeCount);
+
+    int noderRowsRead = 0;
     for (int i = 0; i < graph.nodeCount; i++) {
         int nodenr;
         Graph::Coordinates position;
@@ -55,10 +58,10 @@ void Init::initGraph(Graph &graph, std::string noderFilePath, std::string kanter
         }
 
         graph.coordinates[nodenr] = position;
-        graph.adjList.try_emplace(nodenr);  // Opprett en tom naboliste
+        ++noderRowsRead;
     }
 
-    std::cout << "Node count: " << graph.nodeCount << '\n';
+    std::cout << "Noder Rows read: " << noderRowsRead << " of " << graph.nodeCount << '\n';
 
     nodeData.close();
 
@@ -67,12 +70,25 @@ void Init::initGraph(Graph &graph, std::string noderFilePath, std::string kanter
     std::size_t edgeCount;
     kantData >> edgeCount;
 
+    int kanterRowsRead = 0;
     int franode, tilnode, kjoretid, lengde, fartsgrense;
     while (kantData >> franode >> tilnode >> kjoretid >> lengde >> fartsgrense) {
+        if (franode < 0 || franode >= graph.nodeCount ||
+            tilnode < 0 || tilnode >= graph.nodeCount) {
+            throw std::runtime_error(
+                "Invalid edge " + std::to_string(franode) + " -> " +
+                std::to_string(tilnode) + " for graph with " +
+                std::to_string(graph.nodeCount) + " nodes"
+            );
+        }
+
         graph.add_edge(franode, tilnode, kjoretid);
+        ++kanterRowsRead;
     }
 
-    std::cout << "Initialization Finished";
+    std::cout << "Kanter Rows read: " << kanterRowsRead << " of " << edgeCount << '\n';
+
+    std::cout << "Ferdig med initGraph";
     std::cout << '\n';
     std::cout << '\n';
 }
@@ -84,20 +100,41 @@ void Init::initInterestPoints(std::unordered_map<int, POI>& interestPoints, std:
         std::cerr << "Could not read the node count from " + filePath + "\n";
     }
 
-    std::cout << "Initializing interessepunkter..." << '\n';
+    std::cout << "Starter initInterestPoints..." << '\n';
 
     int interesseCount;
-    interessePunktData >> interesseCount;
+    if (!(interessePunktData >> interesseCount)) {
+        throw std::runtime_error("Could not read POI count from " + filePath);
+    };
+
     std::cout << "Antall Interesse Punkter: " << interesseCount << '\n';
 
-
+    int rowsRead = 0;
     int nodenr, kode;
     std::string navn;
-    while (interessePunktData >> nodenr >> kode >> std::quoted(navn)) {
+    while (interessePunktData >> nodenr >> kode) {
+        std::getline(interessePunktData >> std::ws, navn);
+
+        if (navn.size() >= 2 && navn.front() == '"' && navn.back() == '"') {
+            navn = navn.substr(1, navn.size() - 2);
+        }
+
         interestPoints.emplace(nodenr, POI{kode, navn});
+        ++rowsRead;
     }
 
-    std::cout << "Finished initializing interessepunkter" << '\n';
+    if (interessePunktData.fail() && !interessePunktData.eof()) {
+        interessePunktData.clear();
+        std::string remaining;
+        std::getline(interessePunktData, remaining);
+        std::cerr << "Stopped reading near: [" << remaining << "]\n";
+    }
+
+    std::cout << "Rows read: " << rowsRead << " of " << interesseCount << '\n';
+    std::cout << "Contains node 2488211: " << std::boolalpha
+              << interestPoints.contains(2488211) << '\n';
+
+    std::cout << "Ferdig med initInterestPoints" << '\n';
     std::cout << '\n';
 }
 
@@ -108,10 +145,10 @@ void Init::processLandmarkDistances(
 ) {
     Graph reversed;
     reversed.nodeCount = graph.nodeCount;
+    reversed.adjList.resize(graph.nodeCount);
 
-    for (const auto& [node, edges] : graph.adjList) {
-        reversed.adjList.try_emplace(node);
-        for (const auto& edge : edges) {
+    for (int node = 0; node < graph.nodeCount; ++node) {
+        for (const auto& edge : graph.adjList[node]) {
             reversed.add_edge(edge.to, node, edge.weight);
         }
     }

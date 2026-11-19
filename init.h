@@ -25,7 +25,7 @@ namespace Init {
         };
 
         std::vector<Coordinates> coordinates;
-        std::map<int, std::vector<Edge>> adjList;
+        std::vector<std::vector<Edge>> adjList;
 
         void add_edge(int u, int v, int weight);
         void print(int limit);
