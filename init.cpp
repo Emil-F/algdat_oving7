@@ -12,7 +12,7 @@
 
 void Init::Graph::add_edge(int u, int v, int weight) {
     adjList[u].push_back({.to = v, .weight = weight});
-    adjList[v].push_back({.to = u, .weight = weight});
+    //adjList[v].push_back({.to = u, .weight = weight});
 }
 
 void Init::Graph::print(int limit)
@@ -100,44 +100,71 @@ void Init::initInterestPoints(std::vector<InterestPoint> &interestPoints, std::s
     std::cout << '\n';
 }
 
-void Init::processLandmarkDistances(Graph &graph, std::vector<std::vector<int>> &landmarkDistances, std::vector<int> &landmarkIds) {
-    for (int landmarkId : landmarkIds) {
-        landmarkDistances.push_back(Algorithm::dijkstra(graph, landmarkId, -1));
+void Init::processLandmarkDistances(
+    Graph& graph,
+    std::vector<std::vector<int>>& landmarkDistances,
+    std::vector<int>& landmarkIds
+) {
+    Graph reversed;
+    reversed.nodeCount = graph.nodeCount;
+
+    for (const auto& [node, edges] : graph.adjList) {
+        reversed.adjList.try_emplace(node);
+        for (const auto& edge : edges) {
+            reversed.add_edge(edge.to, node, edge.weight);
+        }
     }
 
-    for (std::size_t i = 0; i < landmarkIds.size(); ++i) {
-        std::ofstream file("data/landmark/landmark_" + std::to_string(landmarkIds[i]) + ".bin",
-                           std::ios::binary);
+    landmarkDistances.clear();
 
-        const auto& distances = landmarkDistances[i];
-        file.write(reinterpret_cast<const char*>(distances.data()),
-                   distances.size() * sizeof(int));
+    for (int id : landmarkIds) {
+        std::string base = "data/landmark/landmark_" + std::to_string(id);
+
+        auto saveRow = [&](const Graph& g, const std::string& path) {
+            auto distances = Algorithm::Dijkstra(g, id, -1);
+
+            std::ofstream file(path, std::ios::binary);
+            file.write(reinterpret_cast<const char*>(distances.data()),
+                       distances.size() * sizeof(int));
+            file.close();
+            if (!file) {
+                throw std::runtime_error("Kunne ikke skrive " + path);
+            }
+
+            landmarkDistances.push_back(std::move(distances));
+        };
+
+        saveRow(graph,    base + "_from.bin");
+        saveRow(reversed, base + "_to.bin");
     }
 }
 
 void Init::readLandmarkDistances(
-    Graph &graph,
-    std::vector<std::vector<int>> &landmarkDistances,
-    std::vector<int> &landmarkIds
-    ) {
+    Graph& graph,
+    std::vector<std::vector<int>>& landmarkDistances,
+    std::vector<int>& landmarkIds
+) {
+    std::vector<std::vector<int>> loaded;
 
-    std::cout << "Leser landmark distances" << '\n';
+    for (int id : landmarkIds) {
+        std::string base = "data/landmark/landmark_" + std::to_string(id);
 
-    for (int landmarkId : landmarkIds) {
-        std::string path = "data/landmark/landmark_" + std::to_string(landmarkId) + ".bin";
-        std::ifstream file(path, std::ios::binary);
+        for (const char* suffix : {"_from.bin", "_to.bin"}) {
+            std::string path = base + suffix;
+            std::ifstream file(path, std::ios::binary);
 
-        if (!file) {
-            std::cerr << "Kunne ikke åpne " << path << '\n';
+            std::vector<int> distances(graph.nodeCount);
+            const auto bytes = static_cast<std::streamsize>(
+                distances.size() * sizeof(int)
+            );
+
+            if (!file.read(reinterpret_cast<char*>(distances.data()), bytes)) {
+                throw std::runtime_error("Kunne ikke lese " + path);
+            }
+
+            loaded.push_back(std::move(distances));
         }
-
-        std::vector<int> distances(graph.nodeCount);
-        const auto bytes = static_cast<std::streamsize>(distances.size() * sizeof(int));
-
-        if (!file.read(reinterpret_cast<char*>(distances.data()), bytes)) {
-            std::cerr << "Kunne ikke lese alle kjøretidene fra " << path << '\n';
-        }
-
-        landmarkDistances.push_back(std::move(distances));
     }
+
+    landmarkDistances = std::move(loaded);
 }

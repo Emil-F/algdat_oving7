@@ -8,7 +8,7 @@
 #include <iostream>
 #include <queue>
 
-std::vector<int> Algorithm::dijkstra(const Init::Graph& graph, int src, int goal) {
+std::vector<int> Algorithm::Dijkstra(const Init::Graph& graph, int src, int goal) {
     // alias
     using QueueEntry = std::pair<int, int>;
 
@@ -64,7 +64,7 @@ double Algorithm::haversine(double b1, double b2, double l1, double l2) {
     return 2*r * asin(sqrt(term1 + term2));
 }
 
-std::vector<int> Algorithm::alt(const Init::Graph& graph, int src, int goal, const std::vector<std::vector<int>>& landmarkDistances) {
+std::vector<int> Algorithm::ALT(const Init::Graph& graph, int src, int goal, const std::vector<std::vector<int>>& landmarkDistances) {
     using QueueEntry = std::tuple<double, int, int>;
 
     std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<>> min_pq;
@@ -72,13 +72,16 @@ std::vector<int> Algorithm::alt(const Init::Graph& graph, int src, int goal, con
     auto h = [&](int node) {
         int best = 0;
 
-        for (const auto& distances : landmarkDistances) {
-            int toNode = distances[node];
-            int toGoal = distances[goal];
+        for (std::size_t i = 0; i < landmarkDistances.size(); i += 2) {
+            const auto& from = landmarkDistances[i];
+            const auto& to   = landmarkDistances[i + 1];
 
-            if (toNode == INT_MAX || toGoal == INT_MAX) continue;
-
-            best = std::max(best, std::abs(toGoal - toNode));
+            if (from[goal] != INT_MAX && from[node] != INT_MAX) {
+                best = std::max(best, from[goal] - from[node]);
+            }
+            if (to[node] != INT_MAX && to[goal] != INT_MAX) {
+                best = std::max(best, to[node] - to[goal]);
+            }
         }
 
         return best;

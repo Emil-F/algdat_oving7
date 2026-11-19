@@ -27,13 +27,13 @@ int main(int argc, char *argv[]) {
 
     std::vector<std::vector<int>> landmarkDistances;
 
-    Init::processLandmarkDistances(graph, landmarkDistances,  landmarkIds);
+    Init::readLandmarkDistances(graph, landmarkDistances,  landmarkIds);
 
     int source = 4441;
     int goal = 103053;
 
     clock_t before = clock();
-    std::vector<int> dist = Algorithm::dijkstra(graph, source, goal);
+    std::vector<int> dist = Algorithm::Dijkstra(graph, source, goal);
     clock_t duration = clock() - before;
 
     std::cout << "Duration (Dijkstra's): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
     std::cout << '\n';
 
     before = clock();
-    dist = Algorithm::alt(graph, source, goal, landmarkDistances);
+    dist = Algorithm::ALT(graph, source, goal, landmarkDistances);
     duration = clock() - before;
 
     std::cout << "Duration (ALT): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
