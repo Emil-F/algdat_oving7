@@ -9,7 +9,11 @@
 #include <iostream>
 #include <queue>
 
-std::vector<int> Algorithm::Dijkstra(const Init::Graph& graph, int src, int goal) {
+std::vector<int> Algorithm::Dijkstra(const Init::Graph& graph, int src, int goal, std::vector<int>* parent) {
+    if (parent) {
+        parent->assign(graph.nodeCount, -1);
+    }
+
     // alias
     using QueueEntry = std::pair<int, int>;
 
@@ -31,7 +35,7 @@ std::vector<int> Algorithm::Dijkstra(const Init::Graph& graph, int src, int goal
 
         ++visitCount;
         if (curV == goal) {
-            std::cout << "Antall noder: " << visitCount << '\n';
+            std::cout << "Antall uttak fra køen: " << visitCount << '\n';
             break;
         };
 
@@ -42,6 +46,11 @@ std::vector<int> Algorithm::Dijkstra(const Init::Graph& graph, int src, int goal
 
             if (kandidat < dist[neighbourVertex]) {
                 dist[neighbourVertex] = qDist + weight;
+
+                if (parent) {
+                    (*parent)[neighbourVertex] = curV;
+                }
+
                 min_pq.push({dist[neighbourVertex], neighbourVertex});
             }
         }
@@ -106,7 +115,7 @@ std::vector<int> Algorithm::ALT(const Init::Graph& graph, int src, int goal, con
 
         ++visitCount;
         if (curV == goal) {
-            std::cout << "Antall noder: " << visitCount << '\n';
+            std::cout << "Antall uttak fra køen: " << visitCount << '\n';
             break;
         };
 
@@ -129,7 +138,7 @@ std::vector<int> Algorithm::ALT(const Init::Graph& graph, int src, int goal, con
 std::vector<int> Algorithm::findNearestInterestPoints(
     const Init::Graph& graph,
     int src,
-    std::unordered_map<int, Init::InterestPoint>& interestPoints,
+    std::unordered_map<int, Init::POI>& interestPoints,
     int intKode,
     int limit
     ) {
@@ -183,7 +192,7 @@ std::vector<int> Algorithm::findNearestInterestPoints(
         }
     }
 
-    std::cout << "Antall noder: " << visitCount << '\n';
+    std::cout << "Antall uttak fra køen: " << visitCount << '\n';
     std::cout << "Antall steder: " << interestPointsFound.size() << '\n';
 
     return interestPointsFound;

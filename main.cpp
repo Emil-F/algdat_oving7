@@ -5,19 +5,38 @@
 #include "algorithm.h"
 #include "init.h"
 
+#include <QApplication>
+#include <QQuickWidget>
+#include <QUrl>
+
+#include <algorithm>
+#include <QGeoCoordinate>
+#include <QVariant>
+
+std::string formatTid(int tid) {
+    int totalSekunder = tid / 100;
+    int timer = totalSekunder / 3600;
+    int minutter = (totalSekunder / 60) % 60;
+    int sekunder = totalSekunder % 60;
+
+    return std::format("Tid (bil) (tt:mm:ss): {:02}:{:02}:{:02}\n", timer, minutter, sekunder);
+}
+
 int main(int argc, char *argv[]) {
+    QApplication app(argc, argv);
+
     // Stjørdal node: 2114236
     // Steinkjer node: 2044600
 
     // 3942 64.1303419 -21.8707187 Domino's
     // 62192 64.3215983 -22.0701350 Subway
-    std::unordered_map<int, Init::InterestPoint> interessePunkter;
-    Init::initInterestPoints(interessePunkter, "data/island/interessepkt.txt");
+    std::unordered_map<int, Init::POI> pointsOfInterest;
+    Init::initInterestPoints(pointsOfInterest, "data/norden/interessepkt.txt");
 
     Init::Graph graph;
-    Init::initGraph(graph, "data/island/noder.txt", "data/island/kanter.txt");
+    Init::initGraph(graph, "data/island/noder.txt", "data/norden/kanter.txt");
 
-    std::vector<int> landmarkIds {
+    std::vector landmarkIds {
         2457,
         104613,
         18304,
@@ -32,15 +51,23 @@ int main(int argc, char *argv[]) {
     int source = 4441;
     int goal = 103053;
 
+    auto sourceName = pointsOfInterest.find(source)->second.navn;
+    auto goalName = pointsOfInterest.find(goal)->second.navn;
+
+    std::cout << "<==> Source: [" << sourceName << "] -> Goal: [" << goalName << "] | (Dijkstra's)" << '\n';
+
     clock_t before = clock();
-    std::vector<int> dist = Algorithm::Dijkstra(graph, source, goal);
+
+    std::vector<int> parent;
+    auto dist = Algorithm::Dijkstra(graph, source, goal, &parent);
     clock_t duration = clock() - before;
 
     std::cout << "Duration (Dijkstra's): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
 
-    float tid = static_cast<float>(dist[goal]) / 100 / 60;
-    std::cout << "Tid (bil) (tt.mm.ss): " << tid << '\n';
+    std::cout << formatTid(dist[goal]);
     std::cout << '\n';
+
+    std::cout << "<==> Source: [" << sourceName << "] -> Goal: [" << goalName << "] | (ALT)" << '\n';
 
     before = clock();
     dist = Algorithm::ALT(graph, source, goal, landmarkDistances);
@@ -48,20 +75,53 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Duration (ALT): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
 
-    tid = static_cast<float>(dist[goal]) / 100 / 60;
-    std::cout << "Tid (bil) (tt.mm.ss): " << tid << '\n';
+    std::cout << formatTid(dist[goal]);
     std::cout << '\n';
 
+    std::cout << "<==> Source: [" << sourceName << "] | (Finn nærmeste interesspunkter)" << '\n';
+
     before = clock();
-    std::vector<int> interestPointsFound = Algorithm::findNearestInterestPoints(graph, source, interessePunkter, 16, 5);
+    std::vector<int> interestPointsFound = Algorithm::findNearestInterestPoints(graph, source, pointsOfInterest, 16, 4);
     duration = clock() - before;
 
-    std::cout << "Duration (Finn nærmeste interessepunkt): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
+    std::cout << "Duration (Finn nærmeste interesspunkter): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
 
-    // tid = static_cast<float>(dist[goal]) / 100 / 60;
-    // std::cout << "Tid (bil) (tt.mm.ss): " << tid << '\n';
-    // std::cout << '\n';
+    // Your existing graph and route calculations go here.
 
-    return 0;
+    QVariantList routePath;
+
+    if (dist[goal] != INT_MAX) {
+        for (int node = goal; node != -1; node = parent[node]) {
+            const auto& pos = graph.coordinates.at(node);
+            routePath.append(QVariant::fromValue(
+                QGeoCoordinate(pos.breddegrad, pos.lengdegrad)
+            ));
+        }
+
+        std::reverse(routePath.begin(), routePath.end());
+    }
+
+    QQuickWidget window;
+    auto nameForNode = [&](int node) -> QString {
+        auto it = pointsOfInterest.find(node);
+        if (it != pointsOfInterest.end()) {
+            return QString::fromStdString(it->second.navn);
+        }
+        return QString("Node %1").arg(node);
+    };
+
+    window.setInitialProperties({
+        {"routePath", routePath},
+        {"startName", nameForNode(source)},
+        {"goalName", nameForNode(goal)}
+    });
+    window.setSource(QUrl("qrc:/MapView.qml"));
+    window.setWindowTitle("Rutekart");
+    window.setResizeMode(QQuickWidget::SizeRootObjectToView);
+    window.resize(1000, 700);
+    window.setSource(QUrl("qrc:/MapView.qml"));
+    window.show();
+
+    return app.exec();
 }
 

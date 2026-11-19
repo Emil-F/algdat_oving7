@@ -8,13 +8,25 @@
 #include "init.h"
 
 namespace Algorithm {
-    std::vector<int> Dijkstra(const Init::Graph& graph, int src, int goal);
-    std::vector<int> ALT(const Init::Graph& graph, int src, int goal, const std::vector<std::vector<int>>& landmarkDistances);
+    std::vector<int> Dijkstra(const Init::Graph& graph,
+        int src,
+        int goal,
+        std::vector<int>* parent = nullptr
+        );
+
+    std::vector<int> ALT(
+        const Init::Graph& graph,
+        int src,
+        int goal,
+        const std::vector<std::vector<int>>& landmarkDistances
+    );
+
     double haversine(double b1, double b2, double l1, double l2);
+
     std::vector<int> findNearestInterestPoints(
         const Init::Graph& graph,
         int src,
-        std::unordered_map<int, Init::InterestPoint>& interestPoints,
+        std::unordered_map<int, Init::POI>& interestPoints,
         int kode,
         int limit
     );

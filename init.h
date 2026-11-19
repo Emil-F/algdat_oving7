@@ -31,12 +31,12 @@ namespace Init {
         void print(int limit);
     };
 
-    struct InterestPoint {
+    struct POI {
         int kode;
         std::string navn;
     };
 
-    void initInterestPoints(std::unordered_map<int, InterestPoint>& interestPoints, std::string filePath);
+    void initInterestPoints(std::unordered_map<int, POI>& interestPoints, std::string filePath);
     void initGraph(Graph &graph, std::string noderFilePath, std::string kanterFilePath);
     void processLandmarkDistances(Graph &graph, std::vector<std::vector<int>> &landmarkDistances, std::vector<int> &landmarkIds);
     void readLandmarkDistances(Graph &graph, std::vector<std::vector<int>> &landmarkDistances, std::vector<int> &landmarkIds);

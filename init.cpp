@@ -34,7 +34,7 @@ void Init::Graph::print(int limit)
 }
 
 void Init::initGraph(Graph &graph, std::string noderFilePath, std::string kanterFilePath) {
-    std::cout << "Initializing Graph..." << '\n';
+    std::cout << "Initializing Graph... (This may take a while)" << '\n';
 
     std::ifstream nodeData(noderFilePath);
 
@@ -77,7 +77,7 @@ void Init::initGraph(Graph &graph, std::string noderFilePath, std::string kanter
     std::cout << '\n';
 }
 
-void Init::initInterestPoints(std::unordered_map<int, InterestPoint>& interestPoints, std::string filePath) {
+void Init::initInterestPoints(std::unordered_map<int, POI>& interestPoints, std::string filePath) {
     std::ifstream interessePunktData(filePath);
 
     if (!interessePunktData) {
@@ -94,7 +94,7 @@ void Init::initInterestPoints(std::unordered_map<int, InterestPoint>& interestPo
     int nodenr, kode;
     std::string navn;
     while (interessePunktData >> nodenr >> kode >> std::quoted(navn)) {
-        interestPoints.emplace(nodenr, InterestPoint{kode, navn});
+        interestPoints.emplace(nodenr, POI{kode, navn});
     }
 
     std::cout << "Finished initializing interessepunkter" << '\n';
