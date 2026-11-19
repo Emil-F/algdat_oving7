@@ -25,7 +25,7 @@ public:
 
     void add_edge(int u, int v, int weight) {
         adjList[u].push_back({v, weight});
-        adjList[v].push_back({u, weight});
+        // adjList[v].push_back({u, weight});
     }
 
     void print(int limit)
@@ -230,6 +230,7 @@ void initGraph(Graph &graph, std::string filePath) {
         }
 
         graph.coordinates[nodenr] = position;
+        graph.adjList.try_emplace(nodenr);  // Opprett en tom naboliste
     }
 
     std::cout << "Node count: " << graph.nodeCount << '\n';
@@ -310,7 +311,7 @@ int main(int argc, char *argv[]) {
         1494,
         21427,
         53876,
-        105626
+        111354
     };
 
     std::vector<std::vector<int>> landmarkDistances;
