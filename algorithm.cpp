@@ -4,6 +4,7 @@
 
 #include "algorithm.h"
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <queue>
@@ -123,4 +124,67 @@ std::vector<int> Algorithm::ALT(const Init::Graph& graph, int src, int goal, con
     }
 
     return dist;
+}
+
+std::vector<int> Algorithm::findNearestInterestPoints(
+    const Init::Graph& graph,
+    int src,
+    std::unordered_map<int, Init::InterestPoint>& interestPoints,
+    int intKode,
+    int limit
+    ) {
+    using QueueEntry = std::pair<int, int>;
+
+    std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<>> min_pq;
+
+    std::vector dist(graph.nodeCount, INT_MAX);
+
+    // set distance from source to itself to 0
+    dist[src] = 0;
+    min_pq.push({0, src});
+
+    int visitCount = 0;
+
+    std::vector<int> interestPointsFound;
+
+    while (!min_pq.empty()) {
+        auto [qDist, curV] = min_pq.top();
+        min_pq.pop();
+
+        if (qDist > dist[curV]) continue;
+
+        ++visitCount;
+
+        if (interestPointsFound.size() >= limit) break;
+
+        for (const auto& edge : graph.adjList.at(curV)) {
+            int neighbourVertex = edge.to;
+            int weight = edge.weight;
+            long long kandidat = qDist + weight;
+
+            if (kandidat < dist[neighbourVertex]) {
+                dist[neighbourVertex] = qDist + weight;
+                min_pq.push({dist[neighbourVertex], neighbourVertex});
+            }
+
+            auto it = interestPoints.find(neighbourVertex);
+
+            if (it != interestPoints.end() && !std::ranges::contains(interestPointsFound, neighbourVertex)) {
+                int nodenr = it->first;
+                int kode = it->second.kode;
+                std::string navn = it->second.navn;
+
+                if (kode == intKode) {
+                    std::cout << "nodenr: " << nodenr << ", kode: " << kode << ", navn: " << navn << '\n';
+                    interestPointsFound.push_back(nodenr);
+                };
+            }
+
+        }
+    }
+
+    std::cout << "Antall noder: " << visitCount << '\n';
+    std::cout << "Antall steder: " << interestPointsFound.size() << '\n';
+
+    return interestPointsFound;
 }

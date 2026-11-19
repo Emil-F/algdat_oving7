@@ -11,6 +11,13 @@ namespace Algorithm {
     std::vector<int> Dijkstra(const Init::Graph& graph, int src, int goal);
     std::vector<int> ALT(const Init::Graph& graph, int src, int goal, const std::vector<std::vector<int>>& landmarkDistances);
     double haversine(double b1, double b2, double l1, double l2);
+    std::vector<int> findNearestInterestPoints(
+        const Init::Graph& graph,
+        int src,
+        std::unordered_map<int, Init::InterestPoint>& interestPoints,
+        int kode,
+        int limit
+    );
 }
 
 #endif //OVING7_ALGO_H

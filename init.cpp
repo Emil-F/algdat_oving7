@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <unordered_map>
 
 #include "algorithm.h"
 
@@ -76,7 +77,7 @@ void Init::initGraph(Graph &graph, std::string noderFilePath, std::string kanter
     std::cout << '\n';
 }
 
-void Init::initInterestPoints(std::vector<InterestPoint> &interestPoints, std::string filePath) {
+void Init::initInterestPoints(std::unordered_map<int, InterestPoint>& interestPoints, std::string filePath) {
     std::ifstream interessePunktData(filePath);
 
     if (!interessePunktData) {
@@ -93,7 +94,7 @@ void Init::initInterestPoints(std::vector<InterestPoint> &interestPoints, std::s
     int nodenr, kode;
     std::string navn;
     while (interessePunktData >> nodenr >> kode >> std::quoted(navn)) {
-        interestPoints.emplace_back(nodenr, kode, navn);
+        interestPoints.emplace(nodenr, InterestPoint{kode, navn});
     }
 
     std::cout << "Finished initializing interessepunkter" << '\n';

@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
 
     // 3942 64.1303419 -21.8707187 Domino's
     // 62192 64.3215983 -22.0701350 Subway
-    std::vector<Init::InterestPoint> interessePunkter;
+    std::unordered_map<int, Init::InterestPoint> interessePunkter;
     Init::initInterestPoints(interessePunkter, "data/island/interessepkt.txt");
 
     Init::Graph graph;
@@ -51,6 +51,16 @@ int main(int argc, char *argv[]) {
     tid = static_cast<float>(dist[goal]) / 100 / 60;
     std::cout << "Tid (bil) (tt.mm.ss): " << tid << '\n';
     std::cout << '\n';
+
+    before = clock();
+    std::vector<int> interestPointsFound = Algorithm::findNearestInterestPoints(graph, source, interessePunkter, 16, 5);
+    duration = clock() - before;
+
+    std::cout << "Duration (Finn nærmeste interessepunkt): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
+
+    // tid = static_cast<float>(dist[goal]) / 100 / 60;
+    // std::cout << "Tid (bil) (tt.mm.ss): " << tid << '\n';
+    // std::cout << '\n';
 
     return 0;
 }

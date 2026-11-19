@@ -6,6 +6,7 @@
 #define OVING7_INIT_H
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace Init {
@@ -31,12 +32,11 @@ namespace Init {
     };
 
     struct InterestPoint {
-        int nodenr;
         int kode;
         std::string navn;
     };
 
-    void initInterestPoints(std::vector<InterestPoint> &interestPoints, std::string filePath);
+    void initInterestPoints(std::unordered_map<int, InterestPoint>& interestPoints, std::string filePath);
     void initGraph(Graph &graph, std::string noderFilePath, std::string kanterFilePath);
     void processLandmarkDistances(Graph &graph, std::vector<std::vector<int>> &landmarkDistances, std::vector<int> &landmarkIds);
     void readLandmarkDistances(Graph &graph, std::vector<std::vector<int>> &landmarkDistances, std::vector<int> &landmarkIds);
