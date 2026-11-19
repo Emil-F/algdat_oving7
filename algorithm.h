@@ -18,7 +18,8 @@ namespace Algorithm {
         const Init::Graph& graph,
         int src,
         int goal,
-        const std::vector<std::vector<int>>& landmarkDistances
+        const std::vector<std::vector<int>>& landmarkDistances,
+        std::vector<int>* parent = nullptr
     );
 
     double haversine(double b1, double b2, double l1, double l2);

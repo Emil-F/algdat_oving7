@@ -74,7 +74,18 @@ double Algorithm::haversine(double b1, double b2, double l1, double l2) {
     return 2*r * asin(sqrt(term1 + term2));
 }
 
-std::vector<int> Algorithm::ALT(const Init::Graph& graph, int src, int goal, const std::vector<std::vector<int>>& landmarkDistances) {
+std::vector<int> Algorithm::ALT(
+    const Init::Graph& graph,
+    int src,
+    int goal,
+    const std::vector<std::vector<int>>& landmarkDistances,
+    std::vector<int>* parent
+    ) {
+
+    if (parent) {
+        parent->assign(graph.nodeCount, -1);
+    }
+
     using QueueEntry = std::tuple<double, int, int>;
 
     std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<>> min_pq;
@@ -127,6 +138,11 @@ std::vector<int> Algorithm::ALT(const Init::Graph& graph, int src, int goal, con
 
             if (nyTid < dist[neighbourVertex]) {
                 dist[neighbourVertex] = static_cast<int>(nyTid);
+
+                if (parent) {
+                    (*parent)[neighbourVertex] = curV;
+                }
+
                 min_pq.emplace(nyTid + h(neighbourVertex), nyTid, neighbourVertex);
             }
         }

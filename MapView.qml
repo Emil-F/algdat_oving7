@@ -9,19 +9,21 @@ Map {
     required property string goalName
 
     plugin: Plugin { name: "osm" }
-    center: QtPositioning.coordinate(64.1466, -21.9426)
-    zoomLevel: 13
+
+    function fitRoute() {
+        if (mapReady && routeLine.path.length >= 2)
+            fitViewportToMapItems([routeLine])
+    }
+
+    onMapReadyChanged: fitRoute()
 
     MapPolyline {
         id: routeLine
+        path: map.routePath
         line.width: 5
         line.color: "royalblue"
-        path: map.routePath
-    }
 
-    onMapReadyChanged: {
-        if (mapReady && routePath.length > 1)
-            fitViewportToMapItems([routeLine])
+        onPathChanged: map.fitRoute()
     }
 
     MapItemView {

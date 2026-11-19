@@ -34,22 +34,22 @@ int main(int argc, char *argv[]) {
     Init::initInterestPoints(pointsOfInterest, "data/norden/interessepkt.txt");
 
     Init::Graph graph;
-    Init::initGraph(graph, "data/island/noder.txt", "data/norden/kanter.txt");
+    Init::initGraph(graph, "data/norden/noder.txt", "data/norden/kanter.txt");
 
     std::vector landmarkIds {
-        2457,
-        104613,
-        18304,
-        59613,
-        79590
+        545911,
+        2948202,
+        7826348,
+        3370846,
+        7161953
     };
 
     std::vector<std::vector<int>> landmarkDistances;
 
     Init::readLandmarkDistances(graph, landmarkDistances,  landmarkIds);
 
-    int source = 4441;
-    int goal = 103053;
+    int source = 2001238;
+    int goal = 2763740;
 
     auto sourceName = pointsOfInterest.find(source)->second.navn;
     auto goalName = pointsOfInterest.find(goal)->second.navn;
@@ -58,8 +58,8 @@ int main(int argc, char *argv[]) {
 
     clock_t before = clock();
 
-    std::vector<int> parent;
-    auto dist = Algorithm::Dijkstra(graph, source, goal, &parent);
+    std::vector<int> parentDijkstra;
+    auto dist = Algorithm::Dijkstra(graph, source, goal, &parentDijkstra);
     clock_t duration = clock() - before;
 
     std::cout << "Duration (Dijkstra's): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
@@ -70,7 +70,8 @@ int main(int argc, char *argv[]) {
     std::cout << "<==> Source: [" << sourceName << "] -> Goal: [" << goalName << "] | (ALT)" << '\n';
 
     before = clock();
-    dist = Algorithm::ALT(graph, source, goal, landmarkDistances);
+    std::vector<int> parentAlt;
+    dist = Algorithm::ALT(graph, source, goal, landmarkDistances, &parentAlt);
     duration = clock() - before;
 
     std::cout << "Duration (ALT): " << static_cast<float>(duration) / CLOCKS_PER_SEC << " seconds" << '\n';
@@ -91,7 +92,7 @@ int main(int argc, char *argv[]) {
     QVariantList routePath;
 
     if (dist[goal] != INT_MAX) {
-        for (int node = goal; node != -1; node = parent[node]) {
+        for (int node = goal; node != -1; node = parentAlt[node]) {
             const auto& pos = graph.coordinates.at(node);
             routePath.append(QVariant::fromValue(
                 QGeoCoordinate(pos.breddegrad, pos.lengdegrad)
